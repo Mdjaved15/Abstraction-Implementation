@@ -1,0 +1,241 @@
+import java.util.*;
+
+interface BankOperations {
+    void deposit(double amount);
+    void withdraw(double amount);
+    void checkBalance();
+
+    default void welcomeMessage(String userName) {
+        System.out.println("\n✅ Login successful. Welcome, " + userName + "!");
+        System.out.println("===== ATM MENU =====");
+    }
+}
+
+// USER CLASS
+class UserAccount implements BankOperations {
+    private String name;
+    private String username;
+    private String password;
+    private double balance;
+
+    public UserAccount(String name, String username, String password, double balance) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.balance = balance;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public boolean login(String inputPassword) {
+        return this.password.equals(inputPassword);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    @Override
+    public void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+            System.out.println("✅ Deposited: ₹" + amount);
+        } else {
+            System.out.println("❌ Invalid deposit amount.");
+        }
+    }
+
+    @Override
+    public void withdraw(double amount) {
+        if (amount > 0 && amount <= balance) {
+            balance -= amount;
+            System.out.println("✅ Withdrawn: ₹" + amount);
+        } else {
+            System.out.println("❌ Insufficient balance or invalid amount.");
+        }
+    }
+
+    @Override
+    public void checkBalance() {
+        System.out.println("💰 Current Balance: ₹" + balance);
+    }
+}
+
+// ADMIN CLASS
+class AdminAccount implements BankOperations {
+    private String username;
+    private String password;
+
+    public AdminAccount(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public boolean login(String inputPassword) {
+        return this.password.equals(inputPassword);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void showAllUsers(List<UserAccount> users) {
+        System.out.println("\n📋 All User Accounts:");
+        for (UserAccount user : users) {
+            System.out.println("👤 " + user.getName() + " | Balance: ₹" + user.getBalance());
+        }
+    }
+
+    public void addUser(List<UserAccount> users, Scanner sc) {
+        sc.nextLine();  // Clear buffer
+        System.out.print("👤 Enter name: ");
+        String name = sc.nextLine();
+        System.out.print("🆔 Enter username: ");
+        String username = sc.nextLine();
+        System.out.print("🔒 Enter password: ");
+        String password = sc.nextLine();
+        System.out.print("💰 Enter initial balance: ");
+        double balance = sc.nextDouble();
+
+        users.add(new UserAccount(name, username, password, balance));
+        System.out.println("✅ User added successfully.");
+    }
+
+    public void deleteUser(List<UserAccount> users, Scanner sc) {
+        sc.nextLine();  // Clear buffer
+        System.out.print("🆔 Enter username to delete: ");
+        String usernameToDelete = sc.nextLine();
+        UserAccount toRemove = null;
+
+        for (UserAccount u : users) {
+            if (u.getUsername().equals(usernameToDelete)) {
+                toRemove = u;
+                break;
+            }
+        }
+
+        if (toRemove != null) {
+            users.remove(toRemove);
+            System.out.println("🗑️ User removed.");
+        } else {
+            System.out.println("❌ User not found.");
+        }
+    }
+
+    // Empty implementations as Admin doesn't need these
+    @Override public void deposit(double amount) {}
+    @Override public void withdraw(double amount) {}
+    @Override public void checkBalance() {}
+}
+
+// MAIN CLASS
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        List<UserAccount> users = new ArrayList<>();
+        users.add(new UserAccount("Md Javed", "javed", "1234", 2000));
+        users.add(new UserAccount("Anjali Sharma", "anjali", "5678", 1500));
+        users.add(new UserAccount("Neha Singh", "neha", "neha123", 2500));
+
+        AdminAccount admin = new AdminAccount("admin", "adminpass");
+
+        System.out.println("🔐 Login as: \n1. User\n2. Admin");
+        System.out.print("👉 Enter choice: ");
+        int loginType = sc.nextInt();
+
+        if (loginType == 1) {
+            sc.nextLine(); // clear buffer
+            System.out.print("👤 Username: ");
+            String username = sc.nextLine();
+            System.out.print("🔒 Password: ");
+            String password = sc.nextLine();
+
+            UserAccount currentUser = null;
+            for (UserAccount u : users) {
+                if (u.getUsername().equals(username) && u.login(password)) {
+                    currentUser = u;
+                    break;
+                }
+            }
+
+            if (currentUser == null) {
+                System.out.println("❌ Login failed.");
+                return;
+            }
+
+            currentUser.welcomeMessage(currentUser.getName());
+
+            while (true) {
+                System.out.println("\n1. Deposit\n2. Withdraw\n3. Check Balance\n4. Exit");
+                System.out.print("👉 Choose option: ");
+                int opt = sc.nextInt();
+
+                switch (opt) {
+                    case 1:
+                        System.out.print("💵 Enter amount: ");
+                        currentUser.deposit(sc.nextDouble());
+                        break;
+                    case 2:
+                        System.out.print("💸 Enter amount: ");
+                        currentUser.withdraw(sc.nextDouble());
+                        break;
+                    case 3:
+                        currentUser.checkBalance();
+                        break;
+                    case 4:
+                        System.out.println("👋 Thank you!");
+                        return;
+                    default:
+                        System.out.println("❌ Invalid option.");
+                }
+            }
+
+        } else if (loginType == 2) {
+            sc.nextLine(); // clear buffer
+            System.out.print("🛡️ Admin username: ");
+            String adminUsername = sc.nextLine();
+            System.out.print("🔒 Admin password: ");
+            String adminPassword = sc.nextLine();
+
+            if (!admin.getUsername().equals(adminUsername) || !admin.login(adminPassword)) {
+                System.out.println("❌ Invalid admin credentials.");
+                return;
+            }
+
+            System.out.println("\n✅ Admin logged in successfully.");
+            while (true) {
+                System.out.println("\n👑 Admin Menu:");
+                System.out.println("1. View All Users\n2. Add User\n3. Delete User\n4. Exit");
+                System.out.print("👉 Choose option: ");
+                int opt = sc.nextInt();
+
+                switch (opt) {
+                    case 1:
+                        admin.showAllUsers(users);
+                        break;
+                    case 2:
+                        admin.addUser(users, sc);
+                        break;
+                    case 3:
+                        admin.deleteUser(users, sc);
+                        break;
+                    case 4:
+                        System.out.println("👋 Exiting admin panel.");
+                        return;
+                    default:
+                        System.out.println("❌ Invalid option.");
+                }
+            }
+
+        } else {
+            System.out.println("❌ Invalid login type.");
+        }
+    }
+}
